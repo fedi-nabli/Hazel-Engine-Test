@@ -1,3 +1,54 @@
+// dear imgui: Renderer for OpenGL3 / OpenGL ES2 / OpenGL ES3 (modern OpenGL with shaders / programmatic pipeline)
+// This needs to be used along with a Platform Binding (e.g. GLFW, SDL, Win32, custom..)
+// (Note: We are using GL3W as a helper library to access OpenGL functions since there is no standard header to access modern OpenGL functions easily. Alternatives are GLEW, Glad, etc..)
+
+// Implemented features:
+//  [X] Renderer: User texture binding. Use 'GLuint' OpenGL texture identifier as void*/ImTextureID. Read the FAQ about ImTextureID in imgui.cpp.
+
+// You can copy and use unmodified imgui_impl_* files in your project. See main.cpp for an example of using this.
+// If you are new to dear imgui, read examples/README.txt and read the documentation at the top of imgui.cpp.
+// https://github.com/ocornut/imgui
+
+// CHANGELOG
+// (minor and older changes stripped away, please see git history for details)
+//  2018-11-30: Misc: Setting up io.BackendRendererName so it can be displayed in the About Window.
+//  2018-11-13: OpenGL: Support for GL 4.5's glClipControl(GL_UPPER_LEFT).
+//  2018-08-29: OpenGL: Added support for more OpenGL loaders: glew and glad, with comments indicative that any loader can be used.
+//  2018-08-09: OpenGL: Default to OpenGL ES 3 on iOS and Android. GLSL version default to "#version 300 ES".
+//  2018-07-30: OpenGL: Support for GLSL 300 ES and 410 core. Fixes for Emscripten compilation.
+//  2018-07-10: OpenGL: Support for more GLSL versions (based on the GLSL version string). Added error output when shaders fail to compile/link.
+//  2018-06-08: Misc: Extracted imgui_impl_opengl3.cpp/.h away from the old combined GLFW/SDL+OpenGL3 examples.
+//  2018-06-08: OpenGL: Use draw_data->DisplayPos and draw_data->DisplaySize to setup projection matrix and clipping rectangle.
+//  2018-05-25: OpenGL: Removed unnecessary backup/restore of GL_ELEMENT_ARRAY_BUFFER_BINDING since this is part of the VAO state.
+//  2018-05-14: OpenGL: Making the call to glBindSampler() optional so 3.2 context won't fail if the function is a NULL pointer.
+//  2018-03-06: OpenGL: Added const char* glsl_version parameter to ImGui_ImplOpenGL3_Init() so user can override the GLSL version e.g. "#version 150".
+//  2018-02-23: OpenGL: Create the VAO in the render function so the setup can more easily be used with multiple shared GL context.
+//  2018-02-16: Misc: Obsoleted the io.RenderDrawListsFn callback and exposed ImGui_ImplSdlGL3_RenderDrawData() in the .h file so you can call it yourself.
+//  2018-01-07: OpenGL: Changed GLSL shader version from 330 to 150.
+//  2017-09-01: OpenGL: Save and restore current bound sampler. Save and restore current polygon mode.
+//  2017-05-01: OpenGL: Fixed save and restore of current blend func state.
+//  2017-05-01: OpenGL: Fixed save and restore of current GL_ACTIVE_TEXTURE.
+//  2016-09-05: OpenGL: Fixed save and restore of current scissor rectangle.
+//  2016-07-29: OpenGL: Explicitly setting GL_UNPACK_ROW_LENGTH to reduce issues because SDL changes it. (#752)
+
+//----------------------------------------
+// OpenGL    GLSL      GLSL
+// version   version   string
+//----------------------------------------
+//  2.0       110       "#version 110"
+//  2.1       120
+//  3.0       130
+//  3.1       140
+//  3.2       150       "#version 150"
+//  3.3       330
+//  4.0       400
+//  4.1       410       "#version 410 core"
+//  4.2       420
+//  4.3       430
+//  ES 2.0    100       "#version 100"
+//  ES 3.0    300       "#version 300 es"
+//----------------------------------------
+
 #if defined(_MSC_VER) && !defined(_CRT_SECURE_NO_WARNINGS)
 #define _CRT_SECURE_NO_WARNINGS
 #endif
@@ -31,7 +82,8 @@ static int          g_AttribLocationPosition = 0, g_AttribLocationUV = 0, g_Attr
 static unsigned int g_VboHandle = 0, g_ElementsHandle = 0;
 
 // Functions
-bool ImGui_ImplOpenGL3_Init(const char* glsl_version) {
+bool    ImGui_ImplOpenGL3_Init(const char* glsl_version)
+{
   ImGuiIO& io = ImGui::GetIO();
   io.BackendRendererName = "imgui_impl_opengl3";
 
@@ -50,11 +102,13 @@ bool ImGui_ImplOpenGL3_Init(const char* glsl_version) {
   return true;
 }
 
-void    ImGui_ImplOpenGL3_Shutdown() {
+void    ImGui_ImplOpenGL3_Shutdown()
+{
   ImGui_ImplOpenGL3_DestroyDeviceObjects();
 }
 
-void    ImGui_ImplOpenGL3_NewFrame() {
+void    ImGui_ImplOpenGL3_NewFrame()
+{
   if (!g_FontTexture)
     ImGui_ImplOpenGL3_CreateDeviceObjects();
 }
@@ -62,7 +116,8 @@ void    ImGui_ImplOpenGL3_NewFrame() {
 // OpenGL3 Render function.
 // (this used to be set in io.RenderDrawListsFn and called by ImGui::Render(), but you can now call this directly from your main loop)
 // Note that this implementation is little overcomplicated because we are saving/setting up/restoring every OpenGL state explicitly, in order to be able to run within any OpenGL engine that doesn't do so.
-void ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data) {
+void    ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data)
+{
   // Avoid rendering when minimized, scale coordinates for retina displays (screen coordinates != framebuffer coordinates)
   ImGuiIO& io = ImGui::GetIO();
   int fb_width = (int)(draw_data->DisplaySize.x * io.DisplayFramebufferScale.x);
@@ -121,7 +176,8 @@ void ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data) {
   float R = draw_data->DisplayPos.x + draw_data->DisplaySize.x;
   float T = draw_data->DisplayPos.y;
   float B = draw_data->DisplayPos.y + draw_data->DisplaySize.y;
-  const float ortho_projection[4][4] = {
+  const float ortho_projection[4][4] =
+  {
       { 2.0f / (R - L),   0.0f,         0.0f,   0.0f },
       { 0.0f,         2.0f / (T - B),   0.0f,   0.0f },
       { 0.0f,         0.0f,        -1.0f,   0.0f },
@@ -148,7 +204,8 @@ void ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data) {
 
   // Draw
   ImVec2 pos = draw_data->DisplayPos;
-  for (int n = 0; n < draw_data->CmdListsCount; n++) {
+  for (int n = 0; n < draw_data->CmdListsCount; n++)
+  {
     const ImDrawList* cmd_list = draw_data->CmdLists[n];
     const ImDrawIdx* idx_buffer_offset = 0;
 
@@ -158,15 +215,19 @@ void ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data) {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_ElementsHandle);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, (GLsizeiptr)cmd_list->IdxBuffer.Size * sizeof(ImDrawIdx), (const GLvoid*)cmd_list->IdxBuffer.Data, GL_STREAM_DRAW);
 
-    for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++) {
+    for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++)
+    {
       const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
-      if (pcmd->UserCallback) {
+      if (pcmd->UserCallback)
+      {
         // User callback (registered via ImDrawList::AddCallback)
         pcmd->UserCallback(cmd_list, pcmd);
       }
-      else {
+      else
+      {
         ImVec4 clip_rect = ImVec4(pcmd->ClipRect.x - pos.x, pcmd->ClipRect.y - pos.y, pcmd->ClipRect.z - pos.x, pcmd->ClipRect.w - pos.y);
-        if (clip_rect.x < fb_width && clip_rect.y < fb_height && clip_rect.z >= 0.0f && clip_rect.w >= 0.0f) {
+        if (clip_rect.x < fb_width && clip_rect.y < fb_height && clip_rect.z >= 0.0f && clip_rect.w >= 0.0f)
+        {
           // Apply scissor/clipping rectangle
           if (clip_origin_lower_left)
             glScissor((int)clip_rect.x, (int)(fb_height - clip_rect.w), (int)(clip_rect.z - clip_rect.x), (int)(clip_rect.w - clip_rect.y));
@@ -205,7 +266,8 @@ void ImGui_ImplOpenGL3_RenderDrawData(ImDrawData* draw_data) {
   glScissor(last_scissor_box[0], last_scissor_box[1], (GLsizei)last_scissor_box[2], (GLsizei)last_scissor_box[3]);
 }
 
-bool ImGui_ImplOpenGL3_CreateFontsTexture() {
+bool ImGui_ImplOpenGL3_CreateFontsTexture()
+{
   // Build texture atlas
   ImGuiIO& io = ImGui::GetIO();
   unsigned char* pixels;
@@ -231,8 +293,10 @@ bool ImGui_ImplOpenGL3_CreateFontsTexture() {
   return true;
 }
 
-void ImGui_ImplOpenGL3_DestroyFontsTexture() {
-  if (g_FontTexture) {
+void ImGui_ImplOpenGL3_DestroyFontsTexture()
+{
+  if (g_FontTexture)
+  {
     ImGuiIO& io = ImGui::GetIO();
     glDeleteTextures(1, &g_FontTexture);
     io.Fonts->TexID = 0;
@@ -241,13 +305,15 @@ void ImGui_ImplOpenGL3_DestroyFontsTexture() {
 }
 
 // If you get an error please report on github. You may try different GL context version or GLSL version. See GL<>GLSL version table at the top of this file.
-static bool CheckShader(GLuint handle, const char* desc) {
+static bool CheckShader(GLuint handle, const char* desc)
+{
   GLint status = 0, log_length = 0;
   glGetShaderiv(handle, GL_COMPILE_STATUS, &status);
   glGetShaderiv(handle, GL_INFO_LOG_LENGTH, &log_length);
   if ((GLboolean)status == GL_FALSE)
     fprintf(stderr, "ERROR: ImGui_ImplOpenGL3_CreateDeviceObjects: failed to compile %s!\n", desc);
-  if (log_length > 0) {
+  if (log_length > 0)
+  {
     ImVector<char> buf;
     buf.resize((int)(log_length + 1));
     glGetShaderInfoLog(handle, log_length, NULL, (GLchar*)buf.begin());
@@ -257,13 +323,15 @@ static bool CheckShader(GLuint handle, const char* desc) {
 }
 
 // If you get an error please report on GitHub. You may try different GL context version or GLSL version.
-static bool CheckProgram(GLuint handle, const char* desc) {
+static bool CheckProgram(GLuint handle, const char* desc)
+{
   GLint status = 0, log_length = 0;
   glGetProgramiv(handle, GL_LINK_STATUS, &status);
   glGetProgramiv(handle, GL_INFO_LOG_LENGTH, &log_length);
   if ((GLboolean)status == GL_FALSE)
     fprintf(stderr, "ERROR: ImGui_ImplOpenGL3_CreateDeviceObjects: failed to link %s! (with GLSL '%s')\n", desc, g_GlslVersionString);
-  if (log_length > 0) {
+  if (log_length > 0)
+  {
     ImVector<char> buf;
     buf.resize((int)(log_length + 1));
     glGetProgramInfoLog(handle, log_length, NULL, (GLchar*)buf.begin());
@@ -272,7 +340,8 @@ static bool CheckProgram(GLuint handle, const char* desc) {
   return (GLboolean)status == GL_TRUE;
 }
 
-bool ImGui_ImplOpenGL3_CreateDeviceObjects() {
+bool    ImGui_ImplOpenGL3_CreateDeviceObjects()
+{
   // Backup GL state
   GLint last_texture, last_array_buffer, last_vertex_array;
   glGetIntegerv(GL_TEXTURE_BINDING_2D, &last_texture);
@@ -386,19 +455,23 @@ bool ImGui_ImplOpenGL3_CreateDeviceObjects() {
   // Select shaders matching our GLSL versions
   const GLchar* vertex_shader = NULL;
   const GLchar* fragment_shader = NULL;
-  if (glsl_version < 130) {
+  if (glsl_version < 130)
+  {
     vertex_shader = vertex_shader_glsl_120;
     fragment_shader = fragment_shader_glsl_120;
   }
-  else if (glsl_version == 410) {
+  else if (glsl_version == 410)
+  {
     vertex_shader = vertex_shader_glsl_410_core;
     fragment_shader = fragment_shader_glsl_410_core;
   }
-  else if (glsl_version == 300) {
+  else if (glsl_version == 300)
+  {
     vertex_shader = vertex_shader_glsl_300_es;
     fragment_shader = fragment_shader_glsl_300_es;
   }
-  else {
+  else
+  {
     vertex_shader = vertex_shader_glsl_130;
     fragment_shader = fragment_shader_glsl_130;
   }
@@ -442,7 +515,8 @@ bool ImGui_ImplOpenGL3_CreateDeviceObjects() {
   return true;
 }
 
-void ImGui_ImplOpenGL3_DestroyDeviceObjects() {
+void    ImGui_ImplOpenGL3_DestroyDeviceObjects()
+{
   if (g_VboHandle) glDeleteBuffers(1, &g_VboHandle);
   if (g_ElementsHandle) glDeleteBuffers(1, &g_ElementsHandle);
   g_VboHandle = g_ElementsHandle = 0;

@@ -18,6 +18,10 @@
 	#define HZ_CORE_ASSERT(x, ...)
 #endif
 
+#ifdef HZ_DEBUG
+	#define HZ_ENABLE_ASSERTS
+#endif
+
 #define BIT(x) (1 << x)
 
 #define HZ_BIND_EVENT_FN(fn) std::bind(&fn, this, std::placeholders::_1)
