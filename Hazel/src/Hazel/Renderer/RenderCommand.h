@@ -9,7 +9,7 @@ namespace Hazel {
 				s_RendererAPI->SetClearColor(color);
 			}
 
-			inline static void CLear() {
+			inline static void Clear() {
 				s_RendererAPI->Clear();
 			}
 
