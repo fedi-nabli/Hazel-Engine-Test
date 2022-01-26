@@ -1383,6 +1383,9 @@
     <ClInclude Include="src\Hazel\Renderer\RenderCommand.h">
       <Filter>src\Hazel\Renderer</Filter>
     </ClInclude>
+    <ClInclude Include="src\Hazel\Renderer\OrthographicCamera.h">
+      <Filter>src\Hazel\Renderer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Hazel\Application.cpp">
@@ -1440,6 +1443,9 @@
       <Filter>src\Hazel\Renderer</Filter>
     </ClCompile>
     <ClCompile Include="src\Hazel\Renderer\RenderCommand.cpp">
+      <Filter>src\Hazel\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Hazel\Renderer\OrthographicCamera.cpp">
       <Filter>src\Hazel\Renderer</Filter>
     </ClCompile>
   </ItemGroup>
