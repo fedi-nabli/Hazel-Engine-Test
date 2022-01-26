@@ -8,8 +8,8 @@
 namespace Hazel {
 	VertexBuffer* VertexBuffer::Create(float* vertices, uint32_t size) {
 		switch (Renderer::GetAPI()) {
-			case RendererAPI::None: HZ_CORE_ASSERT(false, "RendererAPI::None is currently not supported!"); return nullptr;
-			case RendererAPI::OpenGL: return new OpenGLVertexBuffer(vertices, size);
+			case RendererAPI::API::None: HZ_CORE_ASSERT(false, "RendererAPI::None is currently not supported!"); return nullptr;
+			case RendererAPI::API::OpenGL: return new OpenGLVertexBuffer(vertices, size);
 		}
 
 		HZ_CORE_ASSERT(false, "Unknown RenderAPI!");
@@ -18,8 +18,8 @@ namespace Hazel {
 
 	IndexBuffer* IndexBuffer::Create(uint32_t* indices, uint32_t size) {
 		switch (Renderer::GetAPI()) {
-			case Hazel::RendererAPI::None: HZ_CORE_ASSERT(false, "RenderAPI::None is currently not supported!"); return nullptr;
-			case Hazel::RendererAPI::OpenGL: return new OpenGLIndexBuffer(indices, size);
+			case Hazel::RendererAPI::API::None: HZ_CORE_ASSERT(false, "RenderAPI::None is currently not supported!"); return nullptr;
+			case Hazel::RendererAPI::API::OpenGL: return new OpenGLIndexBuffer(indices, size);
 		}
 
 		HZ_CORE_ASSERT(false, "Unknows RendererAPI!");
